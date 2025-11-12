@@ -58,6 +58,40 @@ async function run() {
          })
 
 
+
+  app.patch('/update-book/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        const data = req.body;
+
+        const query = { _id: new ObjectId(id) };
+
+        const update = {
+            $set: {
+                title: data.title,
+                author: data.author,
+                genre: data.genre,
+                rating: data.rating,
+                summary: data.summary,
+                coverImage: data.coverImage,
+                userEmail: data.userEmail
+            }
+        };
+
+        const result = await myColl.updateOne(query, update);
+
+        if (result.matchedCount === 0) {
+            return res.status(404).send({ message: "Book not found" });
+        }
+
+        res.send({ message: "Book updated successfully", result });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Something went wrong" });
+    }
+});
+
+
   } finally {
    
   }
