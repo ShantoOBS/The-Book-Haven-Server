@@ -36,11 +36,25 @@ async function run() {
       res.send(result);
     })
 
-     app.get('/all-books', async (req, res) => {
-      const cursor = myColl.find({});
-      const allValues = await cursor.toArray();
-      res.send(allValues);
-    })
+     app.get("/all-book", async (req, res) => {
+  const userEmail = req.query.email; 
+
+  try {
+    let cursor;
+    if (userEmail) {
+     
+      cursor = myColl.find({ userEmail });
+    } else {
+   
+      cursor = myColl.find({});
+    }
+
+    const books = await cursor.toArray();
+    res.send(books);
+  } catch (err) {
+    res.status(500).send({ message: "Server error", error: err.message });
+  }
+});
 
       app.delete('/delete-book/:id', async (req, res) => {
           const id = req.params.id;
