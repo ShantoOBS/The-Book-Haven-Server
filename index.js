@@ -5,7 +5,7 @@ const app = express()
 const port = 3000
 
 app.use(cors())
-app.use(express())
+app.use(express.json())
 
 //iV6RERmMGVtiikp9
 //Book-Haven
@@ -27,7 +27,14 @@ async function run() {
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
     
-    
+    const myDB = client.db("myDB");
+    const myColl = myDB.collection("Book-store");
+
+    app.post('/add-book', async (req, res) => {
+      const data = req.body;
+      const result = await myColl.insertOne(data);
+      res.send(result);
+    })
 
 
   } finally {
