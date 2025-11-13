@@ -1,6 +1,6 @@
 const express = require('express')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const cors=require('cors')
+const cors = require('cors')
 const app = express()
 const port = process.env.PORT || 3000;
 require('dotenv').config();
@@ -8,6 +8,22 @@ require('dotenv').config();
 app.use(cors())
 app.use(express.json())
 
+const verifyByFireBase=(req,res,next)=>{
+
+     const authorization=req.headers.authorization;
+    
+     if(!authorization)return res.status(401).send({message:"unotherize access"});
+
+     const token=authorization.split(' ')[1];
+
+     if(!token)return res.status(401).send({message:"unotherize access"});
+
+     
+    
+
+     next();
+
+}
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.t2y7ypa.mongodb.net/?appName=Cluster0`;
@@ -24,14 +40,14 @@ async function run() {
   try {
     await client.connect();
     await client.db("admin").command({ ping: 1 });
-    
+
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
-    
+
     const myDB = client.db("myDB");
     const myColl = myDB.collection("Book-store");
 
-    app.post('/add-book', async (req, res) => {
+    app.post('/add-book', verifyByFireBase,async (req, res) => {
       const data = req.body;
       const result = await myColl.insertOne(data);
       res.send(result);
@@ -39,78 +55,77 @@ async function run() {
 
 
 
-     app.get("/all-book", async (req, res) => {
-  const userEmail = req.query.email; 
+    app.get("/all-book", async (req, res) => {
+      const userEmail = req.query.email;
+      try {
+        let cursor;
+        if (userEmail) {
 
-  try {
-    let cursor;
-    if (userEmail) {
-     
-      cursor = myColl.find({ userEmail });
-    } else {
-   
-      cursor = myColl.find({});
-    }
+          cursor = myColl.find({ userEmail });
+        } else {
 
-    const books = await cursor.toArray();
-    res.send(books);
-  } catch (err) {
-    res.status(500).send({ message: "Server error", error: err.message });
-  }
-});
+          cursor = myColl.find({});
+        }
 
-      app.delete('/delete-book/:id', async (req, res) => {
-          const id = req.params.id;
-          let query = { _id: new ObjectId(id) };
-          const result = await myColl.deleteOne(query);
-          res.send(result);
-     });
+        const books = await cursor.toArray();
+        res.send(books);
+      } catch (err) {
+        res.status(500).send({ message: "Server error", error: err.message });
+      }
+    });
 
-
-        app.get('/book-details/:id', async (req, res) => {
-           const id = req.params.id;
-           const query = { _id: new ObjectId(id) };
-           const result = await myColl.findOne(query);
-           res.send(result);
-         })
+    app.delete('/delete-book/:id', async (req, res) => {
+      const id = req.params.id;
+      let query = { _id: new ObjectId(id) };
+      const result = await myColl.deleteOne(query);
+      res.send(result);
+    });
 
 
+    app.get('/book-details/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await myColl.findOne(query);
+      res.send(result);
+    })
 
-  app.patch('/update-book/:id', async (req, res) => {
-    try {
+
+
+    app.patch('/update-book/:id', async (req, res) => {
+      try {
         const id = req.params.id;
         const data = req.body;
 
         const query = { _id: new ObjectId(id) };
 
         const update = {
-            $set: {
-                title: data.title,
-                author: data.author,
-                genre: data.genre,
-                rating: data.rating,
-                summary: data.summary,
-                coverImage: data.coverImage,
-                userEmail: data.userEmail
-            }
+          $set: {
+            title: data.title,
+            author: data.author,
+            genre: data.genre,
+            rating: data.rating,
+            summary: data.summary,
+            coverImage: data.coverImage,
+            userEmail: data.userEmail
+          }
         };
 
         const result = await myColl.updateOne(query, update);
 
         if (result.matchedCount === 0) {
-            return res.status(404).send({ message: "Book not found" });
+          return res.status(404).send({ message: "Book not found" });
         }
 
         res.send({ message: "Book updated successfully", result });
-    } catch (error) {
+      } catch (error) {
         console.error(error);
         res.status(500).send({ message: "Something went wrong" });
-    }
-});
+      }
+    });
 
 
   } finally {
-   
+
   }
 }
 run().catch(console.dir);
