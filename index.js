@@ -2,16 +2,17 @@ const express = require('express')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors=require('cors')
 const app = express()
-const port = 3000
+const port = process.env.PORT || 3000;
+require('dotenv').config();
 
 app.use(cors())
 app.use(express.json())
 
-//iV6RERmMGVtiikp9
-//Book-Haven
 
-const uri = "mongodb+srv://Book-Haven:iV6RERmMGVtiikp9@cluster0.t2y7ypa.mongodb.net/?appName=Cluster0";
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.t2y7ypa.mongodb.net/?appName=Cluster0`;
+
+
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -35,6 +36,8 @@ async function run() {
       const result = await myColl.insertOne(data);
       res.send(result);
     })
+
+
 
      app.get("/all-book", async (req, res) => {
   const userEmail = req.query.email; 
